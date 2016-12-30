@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Color Sorting</title>
+  <style>
+    .content {
+      display: flex;
+      max-width: 1500px;
+      justify-content: space-between;
+      margin: 25px auto 0;
+    }
+    .color-wrapper {
+      width: 32%;
+    }
+
+    @media screen and (max-width: 1024px) {
+      .content {
+        flex-direction: column;
+      }
+      .color-wrapper {
+        width: 100% !important;
+      }
+    }
+
+    h1 {
+      text-align: center;
+      font-family: monospace;
+      font-size: 16px;
+      width: 100%;
+    }
+
+    #random,
+    #brightness,
+    #hue {
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    #random>div,
+    #brightness>div,
+    #hue>div {
+      width: 3px;
+      height: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="content">
+    <div class="color-wrapper">
+      <h1>random colors</h1>
+      <div id="random"></div>
+    </div>
+    <div class="color-wrapper">
+      <h1>sorted by hue</h1>
+      <div id="hue"></div>
+    </div>
+    <div class="color-wrapper">
+      <h1>sorted by perceived brightness</h1>
+      <div id="brightness"></div>
+    </div>
+  </div>
+</body>
+<script>
+  function display(container, arr) {
+    container = document.querySelector(container);
+    arr.forEach(function(c) {
+      var el = document.createElement("div");
+      el.style.backgroundColor = "rgb(" + c.join(", ") + ")";
+      container.appendChild(el);
+    })
+  }
+
+  function calcPerceivedBrightness(c) {
+    var r = c[0] / 255,
+        g = c[1] / 255,
+        b = c[2] / 255;
+
+    var brightness = Math.sqrt(
+      0.299 * Math.pow(r, 2) +
+      0.587 * Math.pow(g, 2) +
+      0.114 * Math.pow(b, 2)
+    );
+
+    return brightness;
+  }
+
+  function calcHue(c) {
+    var r = c[0] / 255,
+        g = c[1] / 255,
+        b = c[2] / 255;
+
+    var max = Math.max(r, g, b),
+        min = Math.min(r, g, b);
+
+    var hue = (max + min) / 2;
+
+    if (max == min) {
+      hue = 0;
+    } else {
+      var d = max - min;
+      switch (max) {
+        case r:
+          hue = (g - b) / d + (g < b ? 6 : 0);
+          break;
+        case g:
+          hue = (b - r) / d + 2;
+          break;
+        case b:
+          hue = (r - g) / d + 4;
+          break;
+      }
+      hue /= 6;
+    }
+    return hue;
+  }
+
+  function createRandomColors(n) {
+    var rgbArr = [];
+    for (var i = 0; i < n; ++i) {
+      rgbArr.push([
+        Math.floor(Math.random() * 256),
+        Math.floor(Math.random() * 256),
+        Math.floor(Math.random() * 256)
+      ]);
+    }
+    return rgbArr;
+  }
+
+  function sortBy(random, func) {
+    return random
+      .map(function(c, i) { return { s: func(c), i: i } })
+      .filter(function(c) {return !!c.s})
+      .sort(function(c1, c2) { return c1.s - c2.s; })
+      .map(function(data) { return rgbArr[data.i]; });
+  }
+
+  var rgbArr = createRandomColors(48000);
+  var sortedByHue = sortBy(rgbArr, calcHue)
+  var sortedByBrightness = sortBy(rgbArr, calcPerceivedBrightness)
+
+  display("#random", rgbArr);
+  display("#hue", sortedByHue);
+  display("#brightness", sortedByBrightness);
+</script>
+</html>
